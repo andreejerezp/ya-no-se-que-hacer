@@ -1,0 +1,18 @@
+# Git y secretos
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+
+# Python y pruebas locales
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# Archivos locales/editor
+.DS_Store
+.vscode/
+.idea/
