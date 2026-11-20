@@ -9,7 +9,7 @@ def build_database_url() -> str:
     password = os.getenv("MYSQL_ROOT_PASSWORD", "")
     host = os.getenv("MYSQL_HOST", "db")
     port = os.getenv("MYSQL_PORT", "3306")
-    database = os.getenv("MYSQL_DATABASE", "caso1_parques_naturales")
+    database = os.getenv("MYSQL_DATABASE", "caso1_ParquesNaturales")
     return URL.create(
         "mysql+pymysql",
         username=user,
