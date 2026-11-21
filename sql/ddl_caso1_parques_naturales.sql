@@ -3,11 +3,11 @@
 -- Reproducible: elimina y recrea la base de datos.
 -- NOTA: decisiones DD-01/DD-02 y algunas reglas de dominio requieren ratificación.
 
-DROP DATABASE IF EXISTS caso1_parques_naturales;
-CREATE DATABASE caso1_parques_naturales
+DROP DATABASE IF EXISTS caso1_ParquesNaturales;
+CREATE DATABASE caso1_ParquesNaturales
   CHARACTER SET utf8mb4
   COLLATE utf8mb4_0900_ai_ci;
-USE caso1_parques_naturales;
+USE caso1_ParquesNaturales;
 
 -- 1) Entidades base
 CREATE TABLE ROL (
@@ -49,8 +49,7 @@ CREATE TABLE TRABAJADOR (
     idSupervisor INT NULL,
     numCorrelativo INT NOT NULL,
     CONSTRAINT fk_trabajador_rol FOREIGN KEY (idRol) REFERENCES ROL(idRol),
-    CONSTRAINT fk_trabajador_supervisor FOREIGN KEY (idSupervisor) REFERENCES TRABAJADOR(idTrabajador),
-    CONSTRAINT chk_trabajador_no_autosupervisor CHECK (idSupervisor IS NULL OR idSupervisor <> idTrabajador)
+    CONSTRAINT fk_trabajador_supervisor FOREIGN KEY (idSupervisor) REFERENCES TRABAJADOR(idTrabajador)
 ) ENGINE=InnoDB;
 
 -- La relación trabajador-trabaja-en y parque-administrador genera referencia circular.

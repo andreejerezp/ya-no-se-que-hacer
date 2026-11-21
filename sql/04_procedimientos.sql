@@ -1,6 +1,6 @@
 -- Caso 1: Parques Naturales | MySQL 8.4
 -- 6 procedimientos oficiales: R1, R4, R9, R10, R11 y R12.
-USE caso1_parques_naturales;
+USE caso1_ParquesNaturales;
 
 DROP PROCEDURE IF EXISTS sp_R1_areas_mayor_visitacion_periodo;
 DROP PROCEDURE IF EXISTS sp_R4_parques_excursiones_visitantes_periodo;
