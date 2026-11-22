@@ -1,7 +1,7 @@
 -- Caso 1: Parques Naturales | MySQL 8.4
 -- 6 vistas oficiales: R2, R3, R5, R6, R7 y R8.
 -- Base de datos/columnas corresponden al DDL caso1_parques_naturales.
-USE caso1_parques_naturales;
+USE caso1_ParquesNaturales;
 
 -- R2: Distribución de especies inventariadas (Vegetal/Animal/Mineral) por parque y área.
 CREATE OR REPLACE VIEW vw_R2_distribucion_especies_inventariadas AS

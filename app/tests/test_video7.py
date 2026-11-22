@@ -1,45 +1,139 @@
-"""Pruebas unitarias básicas de validaciones. Ejecutar desde la carpeta app: pytest ../tests"""
-from unittest.mock import patch
-import sys
-import types
-import pytest
-
-# Stub de conexión: estas pruebas solo ejercitan validaciones de servicio, no requieren MySQL.
-fake_connection = types.ModuleType("db.connection")
-fake_connection.engine = object()
-sys.modules.setdefault("db.connection", fake_connection)
-import services.species_service as species_service
-import services.park_service as park_service
-import services.inscripcion_service as inscription_service
-
-
-def test_species_requires_scientific_name():
-    with pytest.raises(ValueError, match="denominación científica"):
-        species_service.add_species("", "", "", None, "Sin subtipo")
-
-
-def test_park_requires_name():
-    with pytest.raises(ValueError, match="nombre del parque"):
-        park_service.add_park("", 10, None, 2020, "", None, None)
+from datetime import date
+from sqlalchemy import text
+from db.connection import engine, wait_for_database
+from services.catalogo_service import (
+    actualizar_especie_catalogo,
+    actualizar_parque_natural,
+    crear_especie_catalogo,
+    crear_parque_natural,
+    eliminar_especie_catalogo,
+    eliminar_parque_natural,
+    obtener_especies,
+    obtener_parques,
+)
+from services.inscripcion_service import (
+    get_formulario_inscripcion_options,
+    registrar_inscripcion_excursion,
+)
 
 
-def test_park_surface_must_be_positive():
-    with pytest.raises(ValueError, match="superficie"):
-        park_service.add_park("Parque de prueba", 0, None, 2020, "", None, None)
+def run_checks() -> None:
+    wait_for_database()
+    visitantes, excursiones = get_formulario_inscripcion_options()
+    assert len(visitantes) > 0, "Debe existir al menos un visitante en VISITANTE."
+    assert len(excursiones) > 0, "Debe existir al menos una excursión en EXCURSION."
+
+    id_vis = visitantes[0]["idVisitante"]
+    exc = excursiones[0]
+    ok_ins, msg_ins = registrar_inscripcion_excursion(
+        id_visitante=id_vis,
+        num_correlativo=exc["numCorrelativo"],
+        num_interno=exc["numInterno"],
+        codigo_excursion=exc["codigoExcursion"],
+        asistencia="Pendiente",
+        observaciones="Prueba automatizada Video 7",
+    )
+    print("Inscripción 1:", ok_ins, msg_ins)
+
+    # Intentar duplicado
+    ok_dup, msg_dup = registrar_inscripcion_excursion(
+        id_visitante=id_vis,
+        num_correlativo=exc["numCorrelativo"],
+        num_interno=exc["numInterno"],
+        codigo_excursion=exc["codigoExcursion"],
+        asistencia="Pendiente",
+        observaciones="Duplicado",
+    )
+    print("Duplicado esperado False:", ok_dup, msg_dup)
+    assert not ok_dup, "No debe permitir duplicar visitante en la misma excursión."
+
+    # Limpiar inscripción de prueba
+    with engine.begin() as conn:
+        conn.execute(
+            text(
+                """
+                DELETE FROM INSCRIPCION
+                WHERE idVisitante = :vid
+                  AND numCorrelativo = :nc
+                  AND numInterno = :ni
+                  AND codigoExcursion = :ce
+                  AND observaciones = 'Prueba automatizada Video 7'
+                """
+            ),
+            {
+                "vid": id_vis,
+                "nc": exc["numCorrelativo"],
+                "ni": exc["numInterno"],
+                "ce": exc["codigoExcursion"],
+            },
+        )
+
+    # CRUD Parque Natural
+    ok_cp, msg_cp = crear_parque_natural(
+        nombre="Parque Prueba Video 7",
+        superficie_raw="500.50",
+        fecha_declaracion=date(2020, 5, 10),
+        anio_declaracion=2020,
+        estado_conservacion="Bueno",
+        presupuesto_raw="100000.00",
+        id_trabajador_admin=None,
+    )
+    print("Crear parque:", ok_cp, msg_cp)
+    assert ok_cp
+    creados_p = obtener_parques(filtro_texto="Parque Prueba Video 7")
+    assert len(creados_p) == 1
+    pid = creados_p[0]["numCorrelativo"]
+
+    ok_up, msg_up = actualizar_parque_natural(
+        num_correlativo=pid,
+        nombre="Parque Prueba Video 7 Editado",
+        superficie_raw="750.00",
+        fecha_declaracion=date(2020, 5, 10),
+        anio_declaracion=2020,
+        estado_conservacion="Óptimo",
+        presupuesto_raw="150000.00",
+        id_trabajador_admin=None,
+    )
+    print("Actualizar parque:", ok_up, msg_up)
+    assert ok_up
+
+    ok_dp, msg_dp = eliminar_parque_natural(pid)
+    print("Eliminar parque:", ok_dp, msg_dp)
+    assert ok_dp
+
+    # CRUD Especie
+    ok_ce, msg_ce = crear_especie_catalogo(
+        denominacion_cientifica="Nothofagus prueba_v7",
+        nombre_vulgar="Árbol Prueba",
+        estado_conservacion="Vulnerable",
+        fecha_incorporacion=date(2024, 1, 15),
+        tipo_especie="Vegetal",
+        floracion="Primavera",
+    )
+    print("Crear especie:", ok_ce, msg_ce)
+    assert ok_ce
+    creadas_e = obtener_especies(filtro_texto="Nothofagus prueba_v7")
+    assert len(creadas_e) == 1
+    eid = creadas_e[0]["idEspecie"]
+
+    ok_ue, msg_ue = actualizar_especie_catalogo(
+        id_especie=eid,
+        denominacion_cientifica="Nothofagus prueba_v7",
+        nombre_vulgar="Árbol Prueba Editado",
+        estado_conservacion="En recuperación",
+        fecha_incorporacion=date(2024, 1, 15),
+        tipo_especie="Animal",
+        alimentacion="Herbívoro",
+        periodo_celo="Otoño",
+    )
+    print("Actualizar especie:", ok_ue, msg_ue)
+    assert ok_ue
+
+    ok_de, msg_de = eliminar_especie_catalogo(eid)
+    print("Eliminar especie:", ok_de, msg_de)
+    assert ok_de
+    print("Todas las comprobaciones de Video 7 pasaron correctamente.")
 
 
-def test_park_budget_cannot_be_negative():
-    with pytest.raises(ValueError, match="presupuesto"):
-        park_service.add_park("Parque de prueba", 1, None, 2020, "", -1, None)
-
-
-def test_inscription_requires_selection():
-    with pytest.raises(ValueError, match="Selecciona"):
-        inscription_service.register_visitor(None, None)
-
-
-def test_species_create_calls_dao_with_cleaned_values():
-    with patch.object(species_service, "create_species", return_value=10) as mocked:
-        result = species_service.add_species("  Flora  ", "  Flora test  ", "Protegida", None, "Sin subtipo")
-    assert result == 10
-    mocked.assert_called_once()
+if __name__ == "__main__":
+    run_checks()

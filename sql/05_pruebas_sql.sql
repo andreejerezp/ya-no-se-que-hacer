@@ -1,5 +1,5 @@
 -- Pruebas de los 12 requerimientos | Caso 1 | MySQL 8.4
-USE caso1_parques_naturales;
+USE caso1_ParquesNaturales;
 
 -- R2 (VIEW): distribución de especies por parque/área/tipo.
 SELECT * FROM vw_R2_distribucion_especies_inventariadas

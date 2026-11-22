@@ -1,7 +1,7 @@
 -- Datos sintéticos Caso 1. Semilla fija: 20261119
 -- Generado automáticamente por generar_datos_caso1.py
 -- Ejecutar DESPUÉS del DDL validado.
-USE caso1_parques_naturales;
+USE caso1_ParquesNaturales;
 SET FOREIGN_KEY_CHECKS=1;
 SET SQL_SAFE_UPDATES=0;
 START TRANSACTION;
