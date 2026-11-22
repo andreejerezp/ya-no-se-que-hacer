@@ -1,5 +1,7 @@
 from datetime import date
 import streamlit as st
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+
 from db.connection import wait_for_database
 from services.operaciones_service import (
     ESTADOS_ASISTENCIA_VALIDOS,
@@ -18,9 +20,15 @@ from services.operaciones_service import (
     registrar_inscripcion_excursion,
 )
 from services.metrics_service import get_home_metrics
+from services.inscripcion_service import register_visitor, visitor_options, excursion_options
+from services.species_service import search_species, add_species, edit_species, remove_species
+from services.park_service import search_parks, add_park, edit_park, remove_park
 
 st.set_page_config(page_title="Parques Naturales", page_icon="🌿", layout="wide")
-
+st.markdown("""\n<style>utton[kind="primary"] {background:#96333B;color:white;border:0;border-radius:8px;}
+button[kind="primary"]:hover {background:#7A2730;color:white;}
+</style>
+""", unsafe_allow_html=True)
 st.title("🌿 Sistema Integral de Gestión de Parques Naturales")
 st.write("Aplicación inicial del PMV — Caso 1, Fase 2.")
 st.caption("Conexión real a MySQL mediante SQLAlchemy + PyMySQL.")
@@ -28,9 +36,9 @@ st.caption("Conexión real a MySQL mediante SQLAlchemy + PyMySQL.")
 try:
     wait_for_database()
     metrics = get_home_metrics()
-    col1, col2 = st.columns(2)
-    col1.metric("Visitantes registrados", metrics["visitantes"])
-    col2.metric("Excursiones registradas", metrics["excursiones"])
+    c1, c2 = st.columns(2)
+    c1.metric("Visitantes registrados", metrics["visitantes"])
+    c2.metric("Excursiones registradas", metrics["excursiones"])
     st.success("Conexión a MySQL exitosa y consultas ejecutadas.")
 except Exception as exc:
     st.error(
